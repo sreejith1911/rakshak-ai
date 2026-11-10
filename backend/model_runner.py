@@ -36,7 +36,14 @@ class ScamDetectionEngine:
         try:
             import xgboost as xgb
             
-            # Check 0: Fine-Tuned mDeBERTa-v3 Model Directory
+            # Step 1: Always load XGBoost Stacking Model if available
+            if os.path.exists(XGBOOST_MODEL_PATH):
+                logger.info(f"Loading trained XGBoost model from {XGBOOST_MODEL_PATH}...")
+                self.xgb_model = xgb.Booster()
+                self.xgb_model.load_model(XGBOOST_MODEL_PATH)
+
+            # Step 2: Load Intent / Behavioral NLP Model
+            # Option A: Fine-Tuned mDeBERTa-v3 Model
             if os.path.exists(MDEBERTA_MODEL_PATH):
                 logger.info(f"Loading Fine-Tuned mDeBERTa-v3 from {MDEBERTA_MODEL_PATH}...")
                 from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -45,14 +52,10 @@ class ScamDetectionEngine:
                 self.mdeberta_model.eval()
                 self.model_type = "mdeberta"
                 self.trained_models_loaded = True
-                logger.info("[SUCCESS] FINE-TUNED mDeBERTa-v3 SCAM MODEL LOADED!")
+                logger.info("[SUCCESS] FINE-TUNED mDeBERTa-v3 + XGBOOST ENSEMBLE READY!")
 
-            # Check 1: Language-Independent Classifier (intent_classifier.pkl + SentenceTransformer)
-            elif os.path.exists(XGBOOST_MODEL_PATH) and os.path.exists(INTENT_CLASSIFIER_PKL):
-                logger.info(f"Loading trained XGBoost model from {XGBOOST_MODEL_PATH}...")
-                self.xgb_model = xgb.Booster()
-                self.xgb_model.load_model(XGBOOST_MODEL_PATH)
-
+            # Option B: Multilingual Embedder + Intent Classifier
+            elif os.path.exists(INTENT_CLASSIFIER_PKL):
                 logger.info(f"Loading Language-Independent Intent Classifier from {INTENT_CLASSIFIER_PKL}...")
                 import pickle
                 import threading
@@ -70,19 +73,22 @@ class ScamDetectionEngine:
                         self.trained_models_loaded = True
                         # Wire embedder into behavioral detector (pre-encodes the bank)
                         behavioral_detector.set_embedder(self.embedder)
-                        logger.info("[SUCCESS] LANGUAGE-INDEPENDENT COLAB MODELS + BEHAVIORAL DETECTOR READY!")
+                        logger.info("[SUCCESS] MULTILINGUAL EMBEDDING + XGBOOST ENSEMBLE READY!")
                     except Exception as e:
                         logger.warning(f"Error loading embedder: {e}")
 
                 threading.Thread(target=_load_embedder_bg, daemon=True).start()
 
-            # Check 2: Alternative SetFit Model Directory
-            elif os.path.exists(XGBOOST_MODEL_PATH) and os.path.exists(SETFIT_MODEL_PATH):
-                logger.info(f"Loading trained XGBoost model from {XGBOOST_MODEL_PATH}...")
-                self.xgb_model = xgb.Booster()
-                self.xgb_model.load_model(XGBOOST_MODEL_PATH)
-
+            # Option C: Alternative SetFit Model Directory
+            elif os.path.exists(SETFIT_MODEL_PATH):
                 logger.info(f"Loading trained SetFit model from {SETFIT_MODEL_PATH}...")
+                from setfit import SetFitModel
+                self.intent_model = SetFitModel.from_pretrained(SETFIT_MODEL_PATH)
+                self.trained_models_loaded = True
+                self.model_type = "setfit"
+                logger.info("[SUCCESS] LOADED TRAINED SETFIT + XGBOOST ENSEMBLE!")
+            else:
+                logger.info("[INFO] Trained NLP models not detected. Running built-in Smart Stacking Engine.")
                 from setfit import SetFitModel
                 self.intent_model = SetFitModel.from_pretrained(SETFIT_MODEL_PATH)
 
