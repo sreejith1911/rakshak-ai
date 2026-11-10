@@ -89,14 +89,6 @@ class ScamDetectionEngine:
                 logger.info("[SUCCESS] LOADED TRAINED SETFIT + XGBOOST ENSEMBLE!")
             else:
                 logger.info("[INFO] Trained NLP models not detected. Running built-in Smart Stacking Engine.")
-                from setfit import SetFitModel
-                self.intent_model = SetFitModel.from_pretrained(SETFIT_MODEL_PATH)
-
-                self.trained_models_loaded = True
-                self.model_type = "setfit"
-                logger.info("[SUCCESS] LOADED TRAINED SETFIT COLAB MODELS!")
-            else:
-                logger.info("[INFO] Trained Colab models not detected. Running built-in Smart Stacking Engine.")
         except Exception as e:
             logger.warning(f"Error loading trained models: {e}. Falling back to smart stacking engine.")
             self.trained_models_loaded = False
@@ -140,7 +132,15 @@ class ScamDetectionEngine:
                     with torch.no_grad():
                         outputs = self.mdeberta_model(**inputs)
                         probs = F.softmax(outputs.logits, dim=-1).squeeze().cpu().numpy()
-                        intent_prob = float(probs[1]) if probs.ndim > 0 else float(probs)
+                        raw_prob = float(probs[1]) if probs.ndim > 0 else float(probs)
+                    
+                    # Calibration Guard: If a turn has zero fraud triggers and zero behavioral flags,
+                    # gate out cross-lingual bias so normal conversational Kannada doesn't false-alarm
+                    has_fraud_flags = any(h > 0.0 for h in h_features[:6])
+                    if not has_fraud_flags and (behavioral_score < 0.40 or not behavioral_flags):
+                        intent_prob = min(raw_prob, 0.05)
+                    else:
+                        intent_prob = raw_prob
                 elif hasattr(self, "model_type") and self.model_type == "multilingual_embedding_head":
                     emb = self.embedder.encode([eval_text])
                     probs = self.intent_classifier.predict_proba(emb)
@@ -159,7 +159,7 @@ class ScamDetectionEngine:
 
         # Boost intent_prob with behavioral semantic score when keywords miss
         # This handles "Pay me cash to drop the case" with zero keyword matches
-        if behavioral_score > 0.0:
+        if behavioral_flags and behavioral_score >= 0.40:
             intent_prob = max(intent_prob, behavioral_score * 0.85)
 
         # 3. XGBoost Ensemble Stacking
