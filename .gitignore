@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.env
+.venv/
+
+# Large Model weights (keep repo under GitHub 100MB limit)
+models/*.json
+models/*.pkl
+models/*.bin
+models/*.pt
+models/*.onnx
+models/*.safetensors
+!models/README.md
+
+# Jupyter checkpoints only (allow .ipynb notebooks in repo)
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Secrets
+.env
+*.env
+secrets.py
+
+# Scratch
+scratch/
+brain/

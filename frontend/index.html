@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rakshak-AI | Real-Time Kanglish Scam Call Shield</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-dark text-light antialiased">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-brand">
+            <div class="shield-icon">🛡️</div>
+            <div>
+                <h1 class="nav-title">Rakshak<span class="text-accent">AI</span></h1>
+                <p class="nav-subtitle">Real-Time Kannada + English (Kanglish) Telephony Scam Interceptor</p>
+            </div>
+        </div>
+        <div class="nav-badges">
+            <span class="badge badge-gnani">🎙️ Gnani Prisma STT (kn-IN)</span>
+            <span class="badge badge-tech">🤖 Multilingual Embeddings + XGBoost</span>
+            <span class="badge badge-latency">⚡ &lt; 15ms Latency</span>
+            <span id="engineStatusBadge" class="badge badge-status">🟢 Engine Ready</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="dashboard-grid">
+        <!-- Left Panel: Threat Gauge & Call Ingestion -->
+        <section class="card panel-left">
+            <div class="card-header">
+                <h2>Live Call Telemetry</h2>
+                <span id="callStateTag" class="tag tag-idle">IDLE</span>
+            </div>
+
+            <!-- Threat Score Big Gauge -->
+            <div class="threat-gauge-box">
+                <div class="gauge-header">
+                    <span class="gauge-label">CUMULATIVE SCAM RISK SCORE</span>
+                    <span id="riskScoreVal" class="gauge-val text-emerald">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="riskProgressBar" class="progress-bar-fill fill-emerald" style="width: 0%;"></div>
+                </div>
+                <div class="gauge-thresholds">
+                    <span>🟢 Safe (&lt;35%)</span>
+                    <span>🟡 Warning (35-70%)</span>
+                    <span>🔴 Critical (&gt;70%)</span>
+                </div>
+            </div>
+
+            <!-- Live Status Alert Box -->
+            <div id="alertBox" class="alert-box alert-safe">
+                <div class="alert-icon" id="alertIcon">🟢</div>
+                <div>
+                    <h3 id="alertTitle" class="alert-title">Call Status: Secure</h3>
+                    <p id="alertAdvice" class="alert-advice">Click "Start Live Mic" and speak in Kannada or Kanglish to begin real-time scam detection.</p>
+                </div>
+            </div>
+
+            <!-- Audio Waveform Visualizer -->
+            <div class="waveform-container">
+                <div class="waveform-header">
+                    <span>Audio Ingestion (Web Audio API 16kHz PCM)</span>
+                    <span id="audioStatusText" class="text-muted">Mic Inactive</span>
+                </div>
+                <canvas id="waveformCanvas" width="450" height="70"></canvas>
+            </div>
+
+            <!-- Live STT Interim Display -->
+            <div class="stt-live-box">
+                <div class="stt-live-header">
+                    <span>🎤 Live Speech Recognition (kn-IN)</span>
+                    <span id="sttLangBadge" class="badge badge-gnani" style="font-size:0.65rem; padding: 0.15rem 0.5rem;">Kannada / Kanglish</span>
+                </div>
+                <div id="sttInterimDisplay" class="stt-interim">
+                    <span class="text-muted" style="font-size:0.8rem;">Waiting for speech...</span>
+                </div>
+            </div>
+
+            <!-- Primary Controls -->
+            <div class="control-actions">
+                <button id="btnStartMic" class="btn btn-primary">
+                    <span class="btn-icon">🎙️</span> Start Live Mic
+                </button>
+                <button id="btnStopCall" class="btn btn-secondary" disabled>
+                    <span class="btn-icon">🔴</span> End Call
+                </button>
+            </div>
+
+            <!-- Live Explainability Behavioral Pills -->
+            <div class="pills-section">
+                <h3>Detected Behavioral Red Flags</h3>
+                <div id="pillsContainer" class="pills-container">
+                    <span class="text-xs text-muted">No red flags detected yet.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel: Turn-by-Turn Transcript Stream -->
+        <section class="card panel-right">
+            <div class="card-header">
+                <h2>Real-Time Turn-by-Turn Transcript Stream</h2>
+                <div class="turn-counter">
+                    <span>Turn: <strong id="currentTurnCount">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Decision Horizon Progress -->
+            <div class="horizon-stepper">
+                <div id="step1" class="step step-active">
+                    <div class="step-circle">1</div>
+                    <div class="step-info">
+                        <strong>0 - 20s</strong>
+                        <span>Hook &amp; Greeting</span>
+                    </div>
+                </div>
+                <div class="step-line"></div>
+                <div id="step2" class="step">
+                    <div class="step-circle">2</div>
+                    <div class="step-info">
+                        <strong>20 - 45s</strong>
+                        <span>Threat &amp; Coercion</span>
+                    </div>
+                </div>
+                <div class="step-line"></div>
+                <div id="step3" class="step">
+                    <div class="step-circle">3</div>
+                    <div class="step-info">
+                        <strong>45 - 60s</strong>
+                        <span>Action &amp; Demand</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversation Feed -->
+            <div id="transcriptFeed" class="transcript-feed">
+                <div class="empty-state">
+                    <div class="empty-icon">🎧</div>
+                    <h4>No Active Call</h4>
+                    <p>Click "Start Live Mic" and speak in Kannada or Kanglish. Each sentence will be transcribed and analyzed in real time.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Audio Warning Sound Effect -->
+    <audio id="buzzerSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <script src="app.js"></script>
+</body>
+</html>
